@@ -12,6 +12,7 @@ import time
 from entropy import compute_entropy
 from extract import extract_cadicateword,gen_bigram
 import pandas as pd
+import codecs
 
 
 class wordinfo(object):
@@ -43,7 +44,7 @@ class wordinfo(object):
         #compute all kinds of combines for word
         sub_part = gen_bigram(self.text)
         if len(sub_part) > 0:
-            self.pmi = min(map(lambda (left,right) : math.log(self.freq/words_dict[left].freq/words_dict[right].freq),sub_part))
+            self.pmi = min(map(lambda word : math.log(self.freq/words_dict[word[0]].freq/words_dict[word[1]].freq),sub_part))
 
 class segdocument(object):
     '''
@@ -53,7 +54,7 @@ class segdocument(object):
     reference:
 
     '''
-    def __init__(self,doc,max_word_len=5,min_tf=0.000005,min_entropy=0.07,min_pmi=6):
+    def __init__(self,doc,max_word_len=5,min_tf=0.000005,min_entropy=0.07,min_pmi=6.0):
         super(segdocument,self).__init__()
         self.max_word_len = max_word_len
         self.min_tf = min_tf
@@ -102,41 +103,32 @@ if __name__ == '__main__':
         wordlist = []
         word_candidate = []
         dict_bank = []
-        dict_path = path + '/dict.txt'
-        decode_list = ['gb18030','gbk','utf-8','ISO-8859-2','unicode'] #providing multiple decode ways
-        for decode_way in decode_list:
-            try:
-                doc = open(path+'/guangkai.txt','r').read().decode(decode_way)
-                print 'Great!{0} success to decode the document!!!'.format(decode_way)
-                break
-            except:
-                print 'Oops!{0} cannot decode the document!'.format(decode_way)
-        word = segdocument(doc,max_word_len=4,min_tf=0,min_entropy=0.05,min_pmi=3.3)
-        print '平均频率:'+ str(word.avg_frq)
-        print '平均pmi:' + str(word.avg_pmi)
-        print '平均自由度:'+ str(word.avg_entropy)
+        dict_path = path + '\\dict.txt'
 
-        for i in open(dict_path,'r'):
+        doc = codecs.open(path+'\\train_for_ws.txt', "r", "utf-8").read()
+
+        word = segdocument(doc,max_word_len=3,min_tf=(1e-08),min_entropy=1.0,min_pmi=3.0)
+        print('avg_frq:'+ str(word.avg_frq))
+        print('avg_pmi:' + str(word.avg_pmi))
+        print('avg_entropy:'+ str(word.avg_entropy))
+
+        for i in codecs.open(dict_path, 'r', "utf-8"):
             dict_bank.append(i.split(' ')[0])
 
-        print 'result:'
+        print('result:')
         for i in word.word_tf_pmi_ent:
-            if i[0].encode('utf-8') not in dict_bank:
-                word_candidate.append(i[0].encode('utf-8'))
-                wordlist.append([i[0].encode('utf-8'),i[1],i[2],i[3],i[4]])
+            if i[0] not in dict_bank:
+                word_candidate.append(i[0])
+                wordlist.append([i[0],i[1],i[2],i[3],i[4]])
         seg = pd.DataFrame(wordlist,columns=['word','length','fre','pmi','entropy'])
-        seg.to_csv(path+'/extractword.csv',index=False)
+        seg.to_csv(path+'/extractword.csv', index=False ,encoding="utf-8")
+
         # intersection = set(word_candidate) & set(dict_bank)
         # newwordset = set(word_candidate) - intersection
-        for i in wordlist:
-            print i[0],i[1],i[2],i[3],i[4]
+        
+        # for i in wordlist:
+        #     print(i[0],i[1],i[2],i[3],i[4])
 
         endtime = time.clock()
-        print endtime-starttime
+        print(endtime-starttime)
         
-
-
-
-
-
-

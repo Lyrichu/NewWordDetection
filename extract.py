@@ -6,10 +6,10 @@ import re
 def extract_cadicateword(_doc,_max_word_len):
     indexes = []
     doc_length = len(_doc)
-    for i in xrange(doc_length):
-        for j in xrange(i+1,min(i+1+_max_word_len,doc_length+1)):
+    for i in range(doc_length):
+        for j in range(i+1, min(i+1+_max_word_len,doc_length+1)):
             indexes.append((i,j))
-    return sorted(indexes,key = lambda (_i,_j):_doc[_i:_j])
+    return sorted(indexes, key = lambda _word:_doc[_word[0]:_word[1]])
 
 def gen_bigram(_word_str):
     '''
@@ -18,4 +18,4 @@ def gen_bigram(_word_str):
     :param _word_str:
     :return:
     '''
-    return [(_word_str[0:_i],_word_str[_i:]) for _i in xrange(1,len(_word_str))]
+    return [(_word_str[0:_i],_word_str[_i:]) for _i in range(1,len(_word_str))]

@@ -1,4 +1,7 @@
 # **新词发现算法**(**New Word Detection**)   
+
+Difference with the original fork: Updated to python 3
+
 **参考：**  
 **Reference:**  
   - 算法（Algorithm）：
