@@ -120,6 +120,11 @@ if __name__ == '__main__':
             if i[0] not in dict_bank:
                 word_candidate.append(i[0])
                 wordlist.append([i[0],i[1],i[2],i[3],i[4]])
+                
+        # ranking on entropy (primary key) and pmi (secondary key)
+        wordlist = sorted(wordlist, key=lambda word: word[3], reverse=True)
+        wordlist = sorted(wordlist, key=lambda word: word[4], reverse=True)
+        
         seg = pd.DataFrame(wordlist,columns=['word','length','fre','pmi','entropy'])
         seg.to_csv(path+'/extractword.csv', index=False ,encoding="utf-8")
 
