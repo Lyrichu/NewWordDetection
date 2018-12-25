@@ -9,7 +9,7 @@ def extract_cadicateword(_doc,_max_word_len):
     for i in range(doc_length):
         for j in range(i+1, min(i+1+_max_word_len,doc_length+1)):
             indexes.append((i,j))
-    return sorted(indexes, key = lambda _word:_doc[_word[0]:_word[1]])
+    return sorted(indexes, key = lambda _word:_doc[_word[0]:_word[1]]) # 字典序排列
 
 def gen_bigram(_word_str):
     '''
@@ -18,4 +18,5 @@ def gen_bigram(_word_str):
     :param _word_str:
     :return:
     '''
+    # 产生一个word所有可能的二元划分集合
     return [(_word_str[0:_i],_word_str[_i:]) for _i in range(1,len(_word_str))]

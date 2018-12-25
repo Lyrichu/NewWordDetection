@@ -21,14 +21,14 @@ class wordinfo(object):
     '''
     def __init__(self,text):
         super(wordinfo,self).__init__()
-        self.text = text
-        self.freq = 0.0
+        self.text = text # 候选词
+        self.freq = 0.0 # 候选词出现的频率
         self.left = []  #record left neighbors
         self.right = [] #record right neighbors
-        self.pmi = 0
+        self.pmi = 0 # 凝聚度
 
     def update_data(self,left,right):
-        self.freq += 1.0
+        self.freq += 1.0 #候选词出现的次数加1
         if left:
             self.left.append(left)
         if right:
@@ -36,14 +36,19 @@ class wordinfo(object):
 
     def compute_indexes(self,length):
         #compute frequency of word,and left/right entropy
+        # length是整个doc的长度
         self.freq /= length
         self.left = compute_entropy(self.left)
         self.right = compute_entropy(self.right)
 
     def compute_pmi(self,words_dict):
+        # 这里的words_dict是word_cad
+        # key:word,value:word_info
         #compute all kinds of combines for word
         sub_part = gen_bigram(self.text)
         if len(sub_part) > 0:
+            # 使用一个具体的例子来概括就是:
+            # 计算min{p(电影院)/(p(电影)*p(院)),p(电影院)/(p(电)*p(影院))}
             self.pmi = min(map(lambda word : math.log(self.freq/words_dict[word[0]].freq/words_dict[word[1]].freq),sub_part))
 
 class segdocument(object):
@@ -56,16 +61,17 @@ class segdocument(object):
     '''
     def __init__(self,doc,max_word_len=5,min_tf=0.000005,min_entropy=0.07,min_pmi=6.0):
         super(segdocument,self).__init__()
-        self.max_word_len = max_word_len
-        self.min_tf = min_tf
+        self.max_word_len = max_word_len # 最大的词长度
+        self.min_tf = min_tf # 最小的word term frequency
         self.min_entropy = min_entropy
-        self.min_pmi = min_pmi
+        self.min_pmi = min_pmi # 最小的凝聚度
         #analysis documents
         self.word_info = self.gen_words(doc)
-        count = float(len(self.word_info))
+        count = float(len(self.word_info)) # 所有word的个数
         self.avg_frq = sum(map(lambda w : w.freq,self.word_info))/count
         self.avg_entropy = sum(map(lambda w : min(w.left,w.right),self.word_info))/count
         self.avg_pmi = sum(map(lambda w:w.pmi,self.word_info)) / count
+        # 匿名过滤函数
         filter_function = lambda f:len(f.text) > 1 and f.pmi > self.min_pmi and f.freq > self.min_tf\
                                    and min(f.left,f.right) > self.min_entropy
         self.word_tf_pmi_ent = map(lambda w :(w.text,len(w.text),w.freq,w.pmi,min(w.left,w.right)),filter(filter_function,self.word_info))
@@ -73,12 +79,12 @@ class segdocument(object):
     def gen_words(self,doc):
         #pattern = re.compile('[：“。”，！？、《》……；’‘\n——\r\t）、（——^[1-9]d*$]')
         #pattern = re.compile('[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？?：、~@#”“￥：%……&*（）]+|[[A-Za-z0-9]*$]'.decode('utf-8'))
-        pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+')
-        doc = pattern.sub(r'',doc)
+        pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+') # 要去除的无意义的符号
+        doc = pattern.sub(r'',doc) # 替换为空格
         word_index = extract_cadicateword(doc,self.max_word_len)
         word_cad = {} #后选词的字典
         for suffix in word_index:
-            word = doc[suffix[0]:suffix[1]]
+            word = doc[suffix[0]:suffix[1]] # 候选词
             if word not in word_cad:
                 word_cad[word] = wordinfo(word)
                 # record frequency of word and left neighbors and right neighbors
@@ -94,6 +100,7 @@ class segdocument(object):
                 continue
             v.compute_pmi(word_cad)
         # ranking by freq
+        # 由低到高
         return sorted(values,key = lambda v: len(v.text),reverse = False)
 
 
@@ -103,9 +110,9 @@ if __name__ == '__main__':
         wordlist = []
         word_candidate = []
         dict_bank = []
-        dict_path = path + '\\dict.txt'
+        dict_path = path + '/dict.txt'
 
-        doc = codecs.open(path+'\\train_for_ws.txt', "r", "utf-8").read()
+        doc = codecs.open(path+'/train_for_ws.txt', "r", "utf-8").read()
 
         word = segdocument(doc,max_word_len=3,min_tf=(1e-08),min_entropy=1.0,min_pmi=3.0)
         print('avg_frq:'+ str(word.avg_frq))
@@ -113,7 +120,7 @@ if __name__ == '__main__':
         print('avg_entropy:'+ str(word.avg_entropy))
 
         for i in codecs.open(dict_path, 'r', "utf-8"):
-            dict_bank.append(i.split(' ')[0])
+            dict_bank.append(i.split(' ')[0]) # 用户词典
 
         print('result:')
         for i in word.word_tf_pmi_ent:
